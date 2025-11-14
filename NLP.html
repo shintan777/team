@@ -5,133 +5,97 @@
 <title>Natural Language Processing (NLP) Search</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<style>
-body { font-family: Arial, sans-serif; margin: 2rem; }
-input, button { margin: 0.3rem; padding: 0.5rem; font-size: 1rem; }
-.card { border: 1px solid #ccc; padding: 1rem; margin: 0.5rem 0; border-radius: 8px; }
-.searchbar { margin-bottom: 1rem; }
-button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-button:hover { background-color: #45a049; }
-</style>
+<!-- Stylesheets -->
+<link rel="stylesheet" href="css/nlp.css">
+<link rel="stylesheet" href="css/ai-insights.css">
 </head>
 <body>
 
-<h2>Feed/Project Search</h2>
-Pointed at: <a href="https://github.com/ModelEarth/team/blob/main/projects/map/cities.csv">cities.csv</a><br><br>
+<h2>AI-Powered Project Search</h2>
+<p style="font-size: 14px; color: #666; margin: 5px 0 15px 0;">
+    Searching across all project feeds from the
+    <a href="https://docs.google.com/spreadsheets/d/1jQTlXWom-pXvyP9zuTcbdluyvpb43hu2h7anxhF5qlQ/edit" target="_blank">Feed Player Sheet</a>
+</p>
 
-Doesn't appear to be working yet. Ask Claude to active.<br><br>
+<!-- Sample Search Terms Section -->
+<div class="search-examples">
+    <strong>💡 Try these AI-powered project searches:</strong>
+    <ul>
+        <li>"Find projects about sustainability and environmental conservation"</li>
+        <li>"Projects involving data visualization or mapping"</li>
+        <li>"Initiatives focused on education or social impact"</li>
+    </ul>
+    <p style="margin-top: 8px; font-size: 13px; color: #666;">
+        ℹ️ Use regular search for keywords, or click <strong>AI Search</strong> for intelligent semantic matching across projects.
+    </p>
+</div>
 
+<!-- Search Input -->
 <div class="searchbar">
     <input id="q" placeholder="Search feeds/projects…" />
     <label><input type="checkbox" id="fuzzy" checked /> Fuzzy</label>
     <input type="range" id="th" min="0" max="60" value="35" />
-    <button id="ai-refine">Ask AI to refine</button>
 </div>
+
+<!-- Regular Search Results -->
 <div id="search-results">Loading feeds…</div>
 
+<!-- AI Insights Component (Modular & Reusable) -->
+<div id="aiInsights" class="ai-insights-container" style="display: none;">
+    <div class="insights-header">
+        <div class="insights-status" id="insightsStatus">
+            <!-- AI Provider Buttons (rendered by JavaScript) -->
+            <div id="aiProviderButtons"></div>
+
+            <!-- Custom Controls Area (rendered by JavaScript if enabled) -->
+            <div id="aiControlsArea"></div>
+        </div>
+    </div>
+
+    <!-- Insights Content (dynamically populated) -->
+    <div class="insights-content" id="insightsContent">
+        <div style="color: var(--text-secondary); font-style: italic; text-align: center; padding: 20px;">
+            Enter a search query above and click <strong>Gemini Insights</strong> for AI-powered semantic search.
+        </div>
+    </div>
+</div>
+
+<!-- External Libraries - Load First -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
 
+<!-- AI Integration Scripts - Optional, don't block if missing -->
+<script src="js/common.js" onerror="console.warn('common.js not loaded - AI features will use standalone implementation')"></script>
+<script src="js/list.js" onerror="console.warn('list.js not loaded - AI features will use standalone implementation')"></script>
+
+<!-- AI Insights Component (Core) -->
+<script src="js/ai-insights-core.js"></script>
+<script src="js/ai-insights-config.js"></script>
+<script src="js/nlp-url-resolver.js"></script>
+<script src="js/ai-insights-nlp-adapter.js"></script>
+
+<!-- NLP Search Modules -->
+<script src="js/nlp-search.js"></script>
+<script src="js/nlp.js"></script>
+
+<!-- Initialize AI Insights Component -->
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const searchInput = document.getElementById("q");
-    const fuzzyCheckbox = document.getElementById("fuzzy");
-    const thresholdSlider = document.getElementById("th");
-    const searchResultsDiv = document.getElementById("search-results");
-    const aiRefineBtn = document.getElementById("ai-refine");
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Initializing NLP AI Insights Component');
 
-    let feeds = [];
-    let fuse;
+    // Create and initialize the NLP AI Adapter
+    window.nlpAI = new NLPAIAdapter();
 
-    // Load CSV
-    Papa.parse("projects/map/cities.csv", {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-            if(results.data.length === 0 || results.meta.fields.includes("404: Not Found")){
-                searchResultsDiv.innerHTML = `<p style="color:red;">CSV not found or failed to load.</p>`;
-                console.error("CSV load failed. Check the filename and path.");
-                return;
-            }
-
-            feeds = results.data.map(r => ({
-                Title: r.Title?.trim() || "(No title)",
-                Description: r.Description?.trim() || "(No description)",
-                URL: r.URL?.trim() || "#"
-            }));
-
-            console.log("CSV loaded successfully. Headers:", results.meta.fields, "Total feeds:", feeds.length);
-
-            fuse = new Fuse(feeds, {
-                keys: ['Title', 'Description'],
-                threshold: thresholdSlider.value / 100,
-                includeScore: true
-            });
-
-            searchResultsDiv.innerHTML = `<p>Loaded ${feeds.length} rows. Start searching above!</p>`;
-        },
-        error: function(err) {
-            searchResultsDiv.innerHTML = `<p style="color:red;">Error loading CSV: ${err}</p>`;
+    try {
+        const success = await window.nlpAI.init();
+        if (success) {
+            console.log('✅ NLP AI Insights Component ready');
+        } else {
+            console.error('❌ Failed to initialize NLP AI Insights Component');
         }
-    });
-
-    const doSearch = () => {
-        if (!feeds.length) return;
-
-        const query = searchInput.value.trim();
-        if (!query) {
-            searchResultsDiv.innerHTML = '';
-            return;
-        }
-
-        let results = fuzzyCheckbox.checked ? fuse.search(query) : feeds.filter(f =>
-            f.Title.toLowerCase().includes(query.toLowerCase()) ||
-            f.Description.toLowerCase().includes(query.toLowerCase())
-        ).map(f => ({ item: f }));
-
-        if(!results.length){
-            searchResultsDiv.innerHTML = `<p>No results found for "<strong>${query}</strong>"</p>`;
-            return;
-        }
-
-        searchResultsDiv.innerHTML = results.map(r => {
-            const item = r.item;
-            return `<div class="card">
-                        <h3>${item.Title}</h3>
-                        <p>${item.Description}</p>
-                        <a href="${item.URL}" target="_blank">Link</a>
-                    </div>`;
-        }).join('');
-    };
-
-    // Event listeners
-    searchInput.addEventListener("input", doSearch);
-    searchInput.addEventListener("keydown", e => { if(e.key==="Enter") doSearch(); });
-    thresholdSlider.addEventListener("input", () => {
-        if(fuse) fuse.options.threshold = thresholdSlider.value / 100;
-        doSearch();
-    });
-    fuzzyCheckbox.addEventListener("change", doSearch);
-
-    aiRefineBtn.addEventListener("click", () => {
-        if (!feeds.length) return;
-        const query = searchInput.value.trim();
-        if(!query) return;
-
-        const refined = feeds.filter(f =>
-            f.Title.toLowerCase().includes(query.toLowerCase()) ||
-            f.Description.toLowerCase().includes(query.toLowerCase())
-        ).slice(0, 2);
-
-        searchResultsDiv.innerHTML = refined.map(r =>
-            `<div class="card">
-                <h3>${r.Title}</h3>
-                <p>${r.Description} <em>(AI refined)</em></p>
-                <a href="${r.URL}" target="_blank">Link</a>
-            </div>`
-        ).join('');
-    });
+    } catch (error) {
+        console.error('❌ Error initializing NLP AI Insights Component:', error);
+    }
 });
 </script>
 

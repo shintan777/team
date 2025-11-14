@@ -60,18 +60,33 @@ pub async fn analyze_with_claude_cli(
 }
 
 // Call Claude Code CLI for dataset analysis
-async fn call_claude_code_cli(prompt: &str, dataset_info: &Option<serde_json::Value>) -> anyhow::Result<(String, Option<TokenUsage>)> {
+pub async fn call_claude_code_cli(prompt: &str, dataset_info: &Option<serde_json::Value>) -> anyhow::Result<(String, Option<TokenUsage>)> {
     use std::process::Command;
-    
+
+    // Check if claude command exists
+    let check_command = if cfg!(target_os = "windows") {
+        Command::new("where").arg("claude").output()
+    } else {
+        Command::new("which").arg("claude").output()
+    };
+
+    if let Ok(check_result) = check_command {
+        if !check_result.status.success() {
+            return Err(anyhow::anyhow!(
+                "Claude CLI not installed. To use this feature, install the Claude CLI or use the Gemini API instead."
+            ));
+        }
+    }
+
     // Build the full prompt with dataset context
     let full_prompt = if let Some(dataset) = dataset_info {
         format!("{}\n\nDataset Context:\n{}", prompt, serde_json::to_string_pretty(dataset)?)
     } else {
         prompt.to_string()
     };
-    
+
     println!("Executing Claude Code CLI analysis...");
-    
+
     // First try with regular text output since JSON format has issues
     let output = Command::new("claude")
         .arg("--print")

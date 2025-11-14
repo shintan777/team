@@ -28,6 +28,8 @@ mod gemini_insights;
 mod claude_insights;
 mod recommendations;
 mod oauth;
+mod prompts;
+mod semantic_search;
 use recommendations::RecommendationRequest;
 use oauth::{OAuthConfig, UserSession, OAuthUrlResponse};
 
@@ -2943,6 +2945,10 @@ async fn run_api_server(config: Config) -> anyhow::Result<()> {
                             .route("/usage/cli", web::get().to(get_gemini_usage_cli))
                             .route("/usage/website", web::get().to(get_gemini_usage_website))
                             .route("/analyze", web::post().to(gemini_insights::analyze_with_gemini))
+                    )
+                    .service(
+                        web::scope("/semantic-search")
+                            .route("", web::post().to(semantic_search::search_projects))
                     )
                     .service(
                         web::scope("/google")

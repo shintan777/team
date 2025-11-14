@@ -1,0 +1,96 @@
+/* Natural Language Processing (NLP) Search Styles */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 2rem;
+}
+
+input, button {
+    margin: 0.3rem;
+    padding: 0.5rem;
+    font-size: 1rem;
+}
+
+.card {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border-radius: 8px;
+}
+
+.searchbar {
+    margin-bottom: 1rem;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* AI Insights Styling */
+.insights-section {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    background: #fafafa;
+    margin: 20px 0;
+}
+
+.insights-section h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.insights-buttons {
+    margin: 10px 0;
+}
+
+.insights-buttons button {
+    margin-right: 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+}
+
+#nlp-insights-content {
+    min-height: 50px;
+    padding: 15px;
+    background: white;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    margin-top: 10px;
+}
+
+.search-examples {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f0f9ff;
+    border-radius: 5px;
+    border-left: 4px solid #4CAF50;
+}
+
+.search-examples strong {
+    color: #2c5aa0;
+}
+
+.search-examples ul {
+    margin: 8px 0;
+    padding-left: 25px;
+}
+
+.search-examples li {
+    margin: 5px 0;
+    color: #555;
+    line-height: 1.6;
+}
+
+.note {
+    color: #666;
+    font-style: italic;
+    margin: 10px 0;
+}

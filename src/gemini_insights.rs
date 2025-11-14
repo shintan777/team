@@ -31,30 +31,30 @@ pub struct GeminiAnalysisRequest {
     pub data_context: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GeminiAnalysisResponse {
-    success: bool,
-    analysis: Option<String>,
-    error: Option<String>,
-    error_details: Option<GeminiErrorDetails>,
-    token_usage: Option<TokenUsage>,
+    pub success: bool,
+    pub analysis: Option<String>,
+    pub error: Option<String>,
+    pub error_details: Option<GeminiErrorDetails>,
+    pub token_usage: Option<TokenUsage>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TokenUsage {
-    prompt_tokens: Option<u32>,
-    completion_tokens: Option<u32>,
-    total_tokens: Option<u32>,
+    pub prompt_tokens: Option<u32>,
+    pub completion_tokens: Option<u32>,
+    pub total_tokens: Option<u32>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GeminiErrorDetails {
-    status_code: u16,
-    error_type: String,
-    raw_response: Option<String>,
-    request_size: usize,
-    timestamp: String,
-    api_endpoint: String,
+    pub status_code: u16,
+    pub error_type: String,
+    pub raw_response: Option<String>,
+    pub request_size: usize,
+    pub timestamp: String,
+    pub api_endpoint: String,
 }
 
 impl std::fmt::Display for GeminiErrorDetails {
@@ -124,7 +124,7 @@ pub async fn analyze_with_gemini(
 async fn call_gemini_api(api_key: &str, prompt: &str) -> anyhow::Result<(String, Option<TokenUsage>)> {
     let client = reqwest::Client::new();
     let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     );
     
     let request_body = json!({
@@ -153,7 +153,7 @@ async fn call_gemini_api(api_key: &str, prompt: &str) -> anyhow::Result<(String,
         .post(&url)
         .header("Content-Type", "application/json")
         .json(&request_body)
-        .timeout(std::time::Duration::from_secs(30))
+        .timeout(std::time::Duration::from_secs(60))
         .send()
         .await
         .context("Failed to make request to Gemini API")?;
